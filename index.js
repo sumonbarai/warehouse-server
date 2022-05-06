@@ -56,6 +56,25 @@ async function run() {
       );
       res.send(result);
     });
+
+    // product quantity increase
+    app.put("/productIncrease/", async (req, res) => {
+      const id = req.query.id;
+      const quantity = req.body;
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          quantity: quantity.quantity,
+        },
+      };
+      const result = await productCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      res.send(result);
+    });
   } finally {
     // await client.close();
   }
