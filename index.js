@@ -80,6 +80,13 @@ async function run() {
       );
       res.send(result);
     });
+
+    // database product insert by post method
+    app.post("/product", async (req, res) => {
+      const data = req.body;
+      const result = await productCollection.insertOne(data);
+      res.send(result);
+    });
   } finally {
     // await client.close();
   }
