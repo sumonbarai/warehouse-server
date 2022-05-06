@@ -28,7 +28,12 @@ async function run() {
       const total = parseFloat(req.query.total);
       const query = {};
       const cursor = productCollection.find(query);
-      const products = await cursor.limit(total).toArray();
+      let products;
+      if (total) {
+        products = await cursor.limit(total).toArray();
+      } else {
+        products = await cursor.toArray();
+      }
       res.send(products);
     });
     // product get by id
