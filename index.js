@@ -36,6 +36,14 @@ async function run() {
       }
       res.send(products);
     });
+    // product get search by email address
+    app.get("/productEmail", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const cursor = productCollection.find(query);
+      const product = await cursor.toArray();
+      res.send(product);
+    });
     // product get by id
     app.get("/product/:id", async (req, res) => {
       const id = req.params.id;
