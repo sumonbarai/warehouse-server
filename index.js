@@ -4,10 +4,25 @@ const cors = require("cors");
 const port = process.env.PORT || 5000;
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const jwt = require("jsonwebtoken");
 
 // middleware
 app.use(cors());
 app.use(express.json());
+function verifyjwt(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, process.env.ASSESS_TOKEN_SECRECT, function (err, decoded) {
+    if (err) {
+      return res.status(403).send({ message: "forbidden assess" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.spgtn.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
@@ -23,6 +38,15 @@ async function run() {
       .db("productCollection")
       .collection("product");
 
+    // jwt login  token create
+    app.post("/login", async (req, res) => {
+      const email = req.body;
+      const assess_token = jwt.sign(email, process.env.ASSESS_TOKEN_SECRECT, {
+        expiresIn: "1d",
+      });
+      res.send({ assess_token });
+    });
+
     // all product get api
     app.get("/product", async (req, res) => {
       const total = parseFloat(req.query.total);
@@ -37,12 +61,17 @@ async function run() {
       res.send(products);
     });
     // product get search by email address
-    app.get("/productEmail", async (req, res) => {
+    app.get("/productEmail", verifyjwt, async (req, res) => {
+      const decodedEmail = req.decoded.email;
       const email = req.query.email;
       const query = { email: email };
-      const cursor = productCollection.find(query);
-      const product = await cursor.toArray();
-      res.send(product);
+      if (email === decodedEmail) {
+        const cursor = productCollection.find(query);
+        const product = await cursor.toArray();
+        res.send(product);
+      } else {
+        res.status(403).send({ message: "forbidden assess" });
+      }
     });
     // product get by id
     app.get("/product/:id", async (req, res) => {
